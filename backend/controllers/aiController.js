@@ -46,11 +46,33 @@ const generateInterviewQuestions = async (req, res) => {
 // @access Private
 
 const generateConceptExplanation = async (req, res) => {
-    try{
+    try {
+        const { question } = req.body;
 
-    }catch(error){
+        if (!question) {
+            return res.status(400).json({ message: "Missing required field: question" });
+        }
+
+        const prompt = conceptExplainPrompt(question);
+
+        const response = await ai.models.generateContent({
+            model: "gemini-2.0-flash-lite",
+            contents: prompt,
+        });
+
+        let rawText = response.text;
+
+        // Clean response: remove ```json ... ```
+        const cleanedText = rawText
+            .replace(/^```json\s*/, "")
+            .replace(/```$/, "")
+            .trim();
+
+        const data = JSON.parse(cleanedText);
+        res.status(200).json(data);
+    } catch (error) {
         res.status(500).json({
-            message: "Failed to generate questions",
+            message: "Failed to generate explanation",
             error: error.message,
         });
     }
