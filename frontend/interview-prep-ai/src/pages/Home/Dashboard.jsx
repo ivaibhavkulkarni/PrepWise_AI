@@ -8,6 +8,8 @@ import { API_PATHS } from '../../utils/apiPaths';
 import SummaryCard from '../../components/Cards/SummaryCard';
 import moment from 'moment';
 import toast from 'react-hot-toast';
+import Modal from '../../components/Modal';
+import CreateSessionForm from './CreateSessionForm';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -86,6 +88,20 @@ const Dashboard = () => {
           Add New
         </button>
       </div>
+
+      <Modal
+        isOpen={openCreateModal}
+        onClose={() =>{
+          setOpenCreateModal(false)
+        }}
+        HideHeader
+      >
+        <div>
+          <CreateSessionForm />
+        </div>
+
+      </Modal>
+
     </DashboardLayout>
   );
 };
