@@ -1,4 +1,5 @@
 import React from 'react';
+import { getInitials } from '../../utils/helper';
 
 const SummaryCard = ({
   colors = { bgcolor: '#f5f5f5' }, // Default bgcolor to avoid undefined style
@@ -22,7 +23,9 @@ const SummaryCard = ({
       >
         <div className="flex items-start">
           <div className="flex-shrink-0 w-12 h-12 bg-white rounded-md flex items-center justify-center mr-4">
-            <span className="text-lg font-semibold text-black">GU</span>
+            <span className="text-lg font-semibold text-black">
+              {getInitials(role)}
+            </span>
           </div>
           {/* Content Container */}
           <div className="flex-grow">
