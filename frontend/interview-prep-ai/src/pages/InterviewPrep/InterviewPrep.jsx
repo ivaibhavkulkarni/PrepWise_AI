@@ -6,6 +6,7 @@ import { LuCircleAlert, LuListCollapse } from 'react-icons/lu'
 import SpinnerLoader from '../../components/Loaders/SpinnerLoader'
 import { toast } from "react-hot-toast"
 import DashboardLayout from '../../components/layouts/DashboardLayout'
+import RoleInfoHeader from './components/RoleInfoHeader'
 
 const InterviewPrep = () => {
   const { sessionId } = useParams();
@@ -41,7 +42,18 @@ const InterviewPrep = () => {
 
   return (
     <DashboardLayout>
-      Interview
+      <RoleInfoHeader
+        role={sessionData?.role || ""}
+        topicsToFocus={sessionData?.topicsToFocus || ""}
+        experience={sessionData?.experience || "-"}
+        questions={sessionData?.questions?.length || "-"}
+        description={sessionData?.description || ""}
+        lastUpdated={
+          sessionData?.updatedAt
+          ? moment(sessionData.updatedAt).format("Do MMMM YYYY")
+          : ""
+        }
+        />
     </DashboardLayout>
   )
 }
