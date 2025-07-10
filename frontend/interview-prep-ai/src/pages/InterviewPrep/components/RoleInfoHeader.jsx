@@ -8,7 +8,7 @@ const RoleInfoHeader = ({
     description,
     lastUpdated
 }) => {
-  return (<div className='bg-white relative'>
+  return (<div className='bg-white relative lg:ml-4'>
     <div className='container mx-auto px-10 md:px-0'>
         <div className='h-[200px] flex flex-col justify-center relative z-10'>
             <div className=' flex items-start'>
@@ -21,7 +21,7 @@ const RoleInfoHeader = ({
                     </div>
                 </div>
             </div>
-            <div className='flex items-center gap-3 mt-4 lg:pl-4'>
+            <div className='flex items-center gap-3 mt-4'>
             <div className='text-[10px] font-semibold text-white bg-black px-3 py-1 rounded-full'>
                 Experience: {experience} {experience == 1 ? "Year" : "Years"}
             </div>
