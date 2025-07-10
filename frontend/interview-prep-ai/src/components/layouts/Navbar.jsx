@@ -1,19 +1,17 @@
 import React from 'react'
 import ProfileInfoCard from '../Cards/ProfileInfoCard'
-import { Link } from "react-router-dom"
+import { Link } from 'react-router-dom'
 
 const Navbar = () => {
   return (
-    <div className='h-16 bg-white border border-gray-200/50 backdrop-blur-[2px] py-3 px-4 md:px-4 stricky top-0 z-3'>
-      <div className='container mx-auto flex items-center justify-between gap-5'>
-        <Link to="/dashboard">
-            <h2 className='text-lg md:text-xl font-medium text-black leading-5'>
-                PrepWise AI
-            </h2>
-        </Link>
+    <div className='flex justify-between items-center mb-16 backdrop-blur-sm bg-white/20 rounded-2xl p-4 border border-white/30 shadow-lg'>
+      <Link to="/dashboard">
+        <h2 className='text-xl text-black font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent'>
+          PrepWise AI
+        </h2>
+      </Link>
 
-        <ProfileInfoCard/>
-      </div>
+      <ProfileInfoCard />
     </div>
   )
 }
