@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { LuCopy, LuCheck, LuCode } from 'react-icons/lu';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -14,6 +14,22 @@ const AIResponsePreview = ({ content }) => {
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
+            code({ node, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || '');
+              const language = match ? match[1] : '';
+              const isInline = !className;
+
+              return !isInline && match ? (
+                <CodeBlock
+                  code={String(children).replace(/\n$/, '')}
+                  language={language}
+                />
+              ) : (
+                <code className="bg-gray-100 rounded px-1 py-0.5 text-sm" {...props}>
+                  {children}
+                </code>
+              );
+            },
             p({ children }) {
               return <p className="mb-4 leading-5">{children}</p>;
             },
@@ -88,24 +104,6 @@ const AIResponsePreview = ({ content }) => {
             img({ src, alt }) {
               return <img src={src} alt={alt} className="my-4 max-w-full rounded" />;
             },
-            code({ node, inline, className, children, ...props }) {
-              const match = /language-(\w+)/.exec(className || '');
-              return !inline && match ? (
-                <SyntaxHighlighter
-                  style={oneLight}
-                  language={match[1]}
-                  PreTag="div"
-                  className="rounded-md my-4"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, '')}
-                </SyntaxHighlighter>
-              ) : (
-                <code className="bg-gray-100 rounded px-1 py-0.5 text-sm" {...props}>
-                  {children}
-                </code>
-              );
-            },
           }}
         >
           {content}
@@ -114,5 +112,52 @@ const AIResponsePreview = ({ content }) => {
     </div>
   );
 };
+
+function CodeBlock({ code, language }) {
+  const [copied, setCopied] = useState(false);
+
+  const copyCode = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative my-6 rounded-lg overflow-hidden bg-gray-50 border border-gray-200">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 dark:border-gray-00 bg-gray-100 dark:bg-gray-900 rounded-t-md">
+        <div className="flex items-center space-x-2 text-white">
+          <LuCode size={16} />
+          <span>{language || 'Code'}</span>
+        </div>
+        <button
+          onClick={copyCode}
+          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
+          aria-label="Copy code"
+        >
+          {copied ? (
+            <>
+              <LuCheck size={16} />
+              <span className="text-xs">Copied!</span>
+            </>
+          ) : (
+            <LuCopy size={16} />
+          )}
+        </button>
+      </div>
+      <SyntaxHighlighter
+        language={language}
+        style={oneLight}
+        customStyle={{
+          fontSize: 12.5,
+          margin: 0,
+          padding: '1rem',
+          background: 'transparent',
+        }}
+      >
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  );
+}
 
 export default AIResponsePreview;
