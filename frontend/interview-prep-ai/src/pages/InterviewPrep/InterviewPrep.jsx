@@ -10,6 +10,10 @@ import RoleInfoHeader from './components/RoleInfoHeader';
 import axiosInstance from '../../utils/axiosInstance';
 import { API_PATHS } from '../../utils/apiPaths';
 import QuestionCard from '../../components/Cards/QuestionCard';
+import AIResponsePreview from './components/AIResponsePreview';
+import Drawer from '../../components/Drawer';
+import SkeletonLoader from '../../components/Loaders/SkeletonLoader';
+
 
 const InterviewPrep = () => {
   const { sessionId } = useParams();
@@ -41,7 +45,31 @@ const InterviewPrep = () => {
 
   // Generate Concept Explanation (placeholder)
   const generateConceptExplanation = async (question) => {
-    console.log('Generating explanation for:', question);
+    
+    try{
+      setErrorMsg("");
+      setExplanation(null)
+
+      setIsLoading(true);
+      setOpenLeanMoreDrawer(true);
+
+      const response = await axiosInstance.post(
+        API_PATHS.AI.GENERATE_EXPLANATION,
+        {
+          question
+        }
+      );
+
+      if(response.data) {
+        setExplanation(response.data)
+      }
+    }catch(error){
+      setExplanation(null);
+      setErrorMsg("Failed to generate explanation, Try again later");
+      console.error("Error:", error)
+    } finally {
+      setIsLoading(false)
+    }
   };
 
   // Toggle Pin Status
@@ -161,6 +189,24 @@ const InterviewPrep = () => {
                 ))}
             </AnimatePresence>
           </div>
+        </div>
+
+        <div>
+            <Drawer
+              isOpen={openLeanMoreDrawer}
+              onClose={() => setOpenLeanMoreDrawer(false)}
+              title={!isLoading && explanation?.title}
+              >
+                {errorMsg && (
+                  <p className='flex gap-2 text-sm text-amber-600 font-medium'>
+                    <LuCircleAlert className='mt-1'/>{errorMsg}
+                  </p>
+                )}
+                {isLoading && <SkeletonLoader/>}
+                {!isLoading && explanation && (
+                  <AIResponsePreview content={explanation?.explanation}/>
+                )}
+              </Drawer>
         </div>
       </div>
     </DashboardLayout>
