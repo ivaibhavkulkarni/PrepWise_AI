@@ -99,49 +99,55 @@ const InterviewPrep = () => {
   };
 
   //Load More Questions
-  const uploadMoreQuestions = async () => {
-    setIsUpdateLoader(true);
-    try {
-      setIsUpdateLoader(true);
-
-      // call Api 
-
-      const aiResponse = await axiosInstance.post(
-        API_PATHS.AI.GENERATE_QUESTIONS,
-        {
-          role: sessionData?.role,
-          experience: sessionData?.experience,
-          topicsToFocus: sessionData?.topicsToFocus,
-          numberOfQuestions: 10,
-        }
-      );
-
-      // should be like dict
-
-      const generatedQuestions = aiResponse.data;
-
-      const response = await axiosInstance.post(
-        API_PATHS.QUESTION.ADD_TO_SESSION,
-        {
-          sessionId,
-          question: generatedQuestions,
-        }
-      );
-
-      if (response.data) {
-        toast.success("Added More Q&A!!")
-        fetchSessionDetailsById()
+const uploadMoreQuestions = async () => {
+  setIsUpdateLoader(true);
+  try {
+    const aiResponse = await axiosInstance.post(
+      API_PATHS.AI.GENERATE_QUESTIONS,
+      {
+        role: sessionData?.role,
+        experience: sessionData?.experience,
+        topicsToFocus: sessionData?.topicsToFocus,
+        numberOfQuestions: 10,
       }
-    } catch (error) {
-      if (error.response && error.response.data.message) {
-        setErrorMsg(error.response.data.message);
-      }else{
-        setError("Somthing went wrong. Please try again.");
-      }
-    } finally {
-      setIsUpdateLoader(false);
+    );
+
+    let generatedQuestions = aiResponse.data;
+
+    // Normalize: convert array of strings to array of objects
+    if (Array.isArray(generatedQuestions) && typeof generatedQuestions[0] === 'string') {
+      generatedQuestions = generatedQuestions.map((q) => ({
+        question: q,
+        answer: '', // or generate answer if required
+      }));
     }
-  };
+
+    console.log("Formatted Questions:", generatedQuestions);
+
+    const response = await axiosInstance.post(
+      API_PATHS.QUESTION.ADD_TO_SESSION,
+      {
+        sessionId,
+        questions: generatedQuestions,
+      }
+    );
+
+    if (response.data) {
+      toast.success("Added More Q&A!!");
+      fetchSessionDetailsById();
+    }
+  } catch (error) {
+    console.error("Upload questions error:", error);
+
+    if (error.response && error.response.data.message) {
+      setErrorMsg(error.response.data.message);
+    } else {
+      setErrorMsg("Something went wrong. Please try again.");
+    }
+  } finally {
+    setIsUpdateLoader(false);
+  }
+};
 
   useEffect(() => {
     if (sessionId) {
