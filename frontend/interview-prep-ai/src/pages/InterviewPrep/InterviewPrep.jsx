@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import moment from 'moment';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LuCircleAlert, LuListCollapse } from 'react-icons/lu';
+import { LuCircleAlert } from 'react-icons/lu';
 import SpinnerLoader from '../../components/Loaders/SpinnerLoader';
 import { toast } from 'react-hot-toast';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
@@ -17,14 +17,12 @@ const InterviewPrep = () => {
   const [sessionData, setSessionData] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [openLeanMoreDrawer, setOpenLeanMoreDrawer] = useState(false);
-  const [explanation, setExplanation] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUpdateLoader, setIsUpdateLoader] = useState(false);
 
   // Fetch session data by session id
   const fetchSessionDetailsById = async () => {
-    setIsLoading(true); // Set loading state to true
-    setErrorMsg(''); // Clear previous errors
+    setIsLoading(true);
+    setErrorMsg('');
     try {
       const response = await axiosInstance.get(API_PATHS.SESSION.GET_ONE(sessionId));
       if (response.data && response.data.session) {
@@ -37,37 +35,55 @@ const InterviewPrep = () => {
       setErrorMsg('Failed to load session data. Please try again.');
       toast.error('Failed to load session data.');
     } finally {
-      setIsLoading(false); // Reset loading state
+      setIsLoading(false);
     }
   };
 
   // Generate Concept Explanation (placeholder)
   const generateConceptExplanation = async (question) => {
-    // Implement API call or logic to generate explanation
     console.log('Generating explanation for:', question);
   };
 
-  // Pin Question (placeholder)
+  // Toggle Pin Status
   const toggleQuestionPinStatus = async (questionId) => {
-    // Implement API call to toggle pin status
-    console.log('Toggling pin for question:', questionId);
-  };
+  try {
+    const response = await axiosInstance.post(API_PATHS.QUESTION.PIN(questionId));
+    if (response.data && response.data.question) {
+      const updatedQuestion = response.data.question;
 
-  // Add more questions to a session (placeholder)
-  const uploadMoreQuestions = async () => {
-    // Implement API call to upload more questions
-    console.log('Uploading more questions');
-  };
+      setSessionData((prev) => {
+        let updatedQuestions;
+
+        if (updatedQuestion.isPinned) {
+          // Put newly pinned question at the top
+          updatedQuestions = [
+            updatedQuestion,
+            ...prev.questions.filter((q) => q._id !== updatedQuestion._id),
+          ];
+        } else {
+          // Unpin: remove it and append to the bottom of unpinned
+          updatedQuestions = [
+            ...prev.questions.filter((q) => q._id !== updatedQuestion._id),
+            updatedQuestion,
+          ];
+        }
+
+        return {
+          ...prev,
+          questions: updatedQuestions,
+        };
+      });
+    }
+  } catch (error) {
+    console.error("Error pinning/unpinning:", error);
+  }
+};
+
 
   useEffect(() => {
     if (sessionId) {
       fetchSessionDetailsById();
     }
-
-    // Cleanup (optional)
-    return () => {
-      // Any cleanup logic if needed
-    };
   }, [sessionId]);
 
   return (
@@ -88,12 +104,14 @@ const InterviewPrep = () => {
       <div className="container mx-auto pt-4 pb-4 px-4 md:px-0 lg:pl-4">
         <h2 className="text-lg font-semibold color-black">Interview Q & A</h2>
 
-        {isLoading && <SpinnerLoader />} {/* Show loader while fetching */}
+        {isLoading && <SpinnerLoader />}
+
         {errorMsg && (
           <div className="text-red-500 flex items-center gap-2 mt-4">
             <LuCircleAlert /> {errorMsg}
           </div>
         )}
+
         {!isLoading && !errorMsg && sessionData?.questions?.length === 0 && (
           <div className="text-gray-500 mt-4">No questions available for this session.</div>
         )}
@@ -105,31 +123,42 @@ const InterviewPrep = () => {
             }`}
           >
             <AnimatePresence>
-              {sessionData?.questions?.map((data, index) => (
-                <motion.div
-                  key={data._id || index}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.5 }}
-                  transition={{
-                    duration: 0.4,
-                    type: 'spring',
-                    stiffness: 100,
-                    delay: index * 0.1,
-                    damping: 15,
-                  }}
-                  layout
-                  layoutId={`question-${data._id || index}`}
-                >
-                  <QuestionCard
-                    question={data?.question}
-                    answer={data?.answer}
-                    onLearnMore={() => generateConceptExplanation(data.question)}
-                    isPinned={data?.isPinned}
-                    onTogglePin={() => toggleQuestionPinStatus(data._id)}
-                  />
-                </motion.div>
-              ))}
+              {sessionData?.questions
+                ?.slice()
+                ?.sort((a, b) => {
+                  // Sort: pinned first, then by pinnedAt (latest first)
+                  if (a.isPinned && b.isPinned) {
+                    return new Date(b.pinnedAt) - new Date(a.pinnedAt);
+                  }
+                  if (a.isPinned) return -1;
+                  if (b.isPinned) return 1;
+                  return 0;
+                })
+                ?.map((data, index) => (
+                  <motion.div
+                    key={data._id || index}
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.5 }}
+                    transition={{
+                      duration: 0.4,
+                      type: 'spring',
+                      stiffness: 100,
+                      delay: index * 0.05,
+                      damping: 15,
+                    }}
+                    layout
+                    layoutId={`question-${data._id || index}`}
+                  >
+                    <QuestionCard
+                      question={data?.question}
+                      answer={data?.answer}
+                      isPinned={data?.isPinned}
+                      onTogglePin={() => toggleQuestionPinStatus(data._id)}
+                      onLearnMore={() => generateConceptExplanation(data.question)}
+                    />
+                  </motion.div>
+                ))}
             </AnimatePresence>
           </div>
         </div>
