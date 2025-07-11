@@ -14,14 +14,14 @@ import AIResponsePreview from './components/AIResponsePreview';
 import Drawer from '../../components/Drawer';
 import SkeletonLoader from '../../components/Loaders/SkeletonLoader';
 
-
 const InterviewPrep = () => {
   const { sessionId } = useParams();
 
   const [sessionData, setSessionData] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
-  const [openLeanMoreDrawer, setOpenLeanMoreDrawer] = useState(false);
+  const [openLearnMoreDrawer, setOpenLearnMoreDrawer] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [explanation, setExplanation] = useState(null); // Added missing state
 
   // Fetch session data by session id
   const fetchSessionDetailsById = async () => {
@@ -43,70 +43,64 @@ const InterviewPrep = () => {
     }
   };
 
-  // Generate Concept Explanation (placeholder)
+  // Generate Concept Explanation
   const generateConceptExplanation = async (question) => {
-    
-    try{
-      setErrorMsg("");
-      setExplanation(null)
-
-      setIsLoading(true);
-      setOpenLeanMoreDrawer(true);
-
-      const response = await axiosInstance.post(
-        API_PATHS.AI.GENERATE_EXPLANATION,
-        {
-          question
-        }
-      );
-
-      if(response.data) {
-        setExplanation(response.data)
-      }
-    }catch(error){
+    try {
+      setErrorMsg('');
       setExplanation(null);
-      setErrorMsg("Failed to generate explanation, Try again later");
-      console.error("Error:", error)
+      setIsLoading(true);
+      setOpenLearnMoreDrawer(true);
+
+      const response = await axiosInstance.post(API_PATHS.AI.GENERATE_EXPLANATION, {
+        question,
+      });
+
+      if (response.data) {
+        setExplanation(response.data);
+      }
+    } catch (error) {
+      setExplanation(null);
+      setErrorMsg('Failed to generate explanation. Try again later.');
+      console.error('Error:', error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
   };
 
   // Toggle Pin Status
   const toggleQuestionPinStatus = async (questionId) => {
-  try {
-    const response = await axiosInstance.post(API_PATHS.QUESTION.PIN(questionId));
-    if (response.data && response.data.question) {
-      const updatedQuestion = response.data.question;
+    try {
+      const response = await axiosInstance.post(API_PATHS.QUESTION.PIN(questionId));
+      if (response.data && response.data.question) {
+        const updatedQuestion = response.data.question;
 
-      setSessionData((prev) => {
-        let updatedQuestions;
+        setSessionData((prev) => {
+          let updatedQuestions;
 
-        if (updatedQuestion.isPinned) {
-          // Put newly pinned question at the top
-          updatedQuestions = [
-            updatedQuestion,
-            ...prev.questions.filter((q) => q._id !== updatedQuestion._id),
-          ];
-        } else {
-          // Unpin: remove it and append to the bottom of unpinned
-          updatedQuestions = [
-            ...prev.questions.filter((q) => q._id !== updatedQuestion._id),
-            updatedQuestion,
-          ];
-        }
+          if (updatedQuestion.isPinned) {
+            // Put newly pinned question at the top
+            updatedQuestions = [
+              updatedQuestion,
+              ...prev.questions.filter((q) => q._id !== updatedQuestion._id),
+            ];
+          } else {
+            // Unpin: remove it and append to the bottom of unpinned
+            updatedQuestions = [
+              ...prev.questions.filter((q) => q._id !== updatedQuestion._id),
+              updatedQuestion,
+            ];
+          }
 
-        return {
-          ...prev,
-          questions: updatedQuestions,
-        };
-      });
+          return {
+            ...prev,
+            questions: updatedQuestions,
+          };
+        });
+      }
+    } catch (error) {
+      console.error('Error pinning/unpinning:', error);
     }
-  } catch (error) {
-    console.error("Error pinning/unpinning:", error);
-  }
-};
-
+  };
 
   useEffect(() => {
     if (sessionId) {
@@ -132,9 +126,9 @@ const InterviewPrep = () => {
       <div className="container mx-auto pt-4 pb-4 px-4 md:px-0 lg:pl-4">
         <h2 className="text-lg font-semibold color-black">Interview Q & A</h2>
 
-        {isLoading && <SpinnerLoader />}
+        {isLoading && !openLearnMoreDrawer && <SpinnerLoader />}
 
-        {errorMsg && (
+        {errorMsg && !openLearnMoreDrawer && (
           <div className="text-red-500 flex items-center gap-2 mt-4">
             <LuCircleAlert /> {errorMsg}
           </div>
@@ -147,7 +141,7 @@ const InterviewPrep = () => {
         <div className="grid grid-cols-12 gap-4 mt-5 mb-10">
           <div
             className={`col-span-12 ${
-              openLeanMoreDrawer ? 'md:col-span-7' : 'md:col-span-8'
+              openLearnMoreDrawer ? 'md:col-span-7' : 'md:col-span-8'
             }`}
           >
             <AnimatePresence>
@@ -191,23 +185,21 @@ const InterviewPrep = () => {
           </div>
         </div>
 
-        <div>
-            <Drawer
-              isOpen={openLeanMoreDrawer}
-              onClose={() => setOpenLeanMoreDrawer(false)}
-              title={!isLoading && explanation?.title}
-              >
-                {errorMsg && (
-                  <p className='flex gap-2 text-sm text-amber-600 font-medium'>
-                    <LuCircleAlert className='mt-1'/>{errorMsg}
-                  </p>
-                )}
-                {isLoading && <SkeletonLoader/>}
-                {!isLoading && explanation && (
-                  <AIResponsePreview content={explanation?.explanation}/>
-                )}
-              </Drawer>
-        </div>
+        <Drawer
+          isOpen={openLearnMoreDrawer}
+          onClose={() => setOpenLearnMoreDrawer(false)}
+          title={explanation?.title || 'Learn More'}
+        >
+          {errorMsg && (
+            <p className="flex gap-2 text-sm text-amber-600 font-medium">
+              <LuCircleAlert className="mt-1" /> {errorMsg}
+            </p>
+          )}
+          {isLoading && <SkeletonLoader />}
+          {!isLoading && explanation && (
+            <AIResponsePreview content={explanation?.explanation} />
+          )}
+        </Drawer>
       </div>
     </DashboardLayout>
   );
