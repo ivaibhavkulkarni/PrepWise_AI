@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import moment from 'moment';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LuCircleAlert } from 'react-icons/lu';
+import { LuCircleAlert, LuListCollapse } from 'react-icons/lu';
 import SpinnerLoader from '../../components/Loaders/SpinnerLoader';
 import { toast } from 'react-hot-toast';
 import DashboardLayout from '../../components/layouts/DashboardLayout';
@@ -21,9 +21,9 @@ const InterviewPrep = () => {
   const [errorMsg, setErrorMsg] = useState('');
   const [openLearnMoreDrawer, setOpenLearnMoreDrawer] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [explanation, setExplanation] = useState(null); // Added missing state
+  const [isUpdateLoader, setIsUpdateLoader] = useState(false); // ADDED
+  const [explanation, setExplanation] = useState(null);
 
-  // Fetch session data by session id
   const fetchSessionDetailsById = async () => {
     setIsLoading(true);
     setErrorMsg('');
@@ -43,7 +43,6 @@ const InterviewPrep = () => {
     }
   };
 
-  // Generate Concept Explanation
   const generateConceptExplanation = async (question) => {
     try {
       setErrorMsg('');
@@ -67,7 +66,6 @@ const InterviewPrep = () => {
     }
   };
 
-  // Toggle Pin Status
   const toggleQuestionPinStatus = async (questionId) => {
     try {
       const response = await axiosInstance.post(API_PATHS.QUESTION.PIN(questionId));
@@ -78,13 +76,11 @@ const InterviewPrep = () => {
           let updatedQuestions;
 
           if (updatedQuestion.isPinned) {
-            // Put newly pinned question at the top
             updatedQuestions = [
               updatedQuestion,
               ...prev.questions.filter((q) => q._id !== updatedQuestion._id),
             ];
           } else {
-            // Unpin: remove it and append to the bottom of unpinned
             updatedQuestions = [
               ...prev.questions.filter((q) => q._id !== updatedQuestion._id),
               updatedQuestion,
@@ -99,6 +95,19 @@ const InterviewPrep = () => {
       }
     } catch (error) {
       console.error('Error pinning/unpinning:', error);
+    }
+  };
+
+  //Load More Questions
+  const uploadMoreQuestions = async () => {
+    setIsUpdateLoader(true);
+    try {
+     
+    } catch (error) {
+      console.error('Load more error:', error);
+      toast.error('Failed to load more questions.');
+    } finally {
+      setIsUpdateLoader(false);
     }
   };
 
@@ -148,7 +157,6 @@ const InterviewPrep = () => {
               {sessionData?.questions
                 ?.slice()
                 ?.sort((a, b) => {
-                  // Sort: pinned first, then by pinnedAt (latest first)
                   if (a.isPinned && b.isPinned) {
                     return new Date(b.pinnedAt) - new Date(a.pinnedAt);
                   }
@@ -182,6 +190,24 @@ const InterviewPrep = () => {
                   </motion.div>
                 ))}
             </AnimatePresence>
+
+            
+            {!isLoading && sessionData?.questions?.length > 0 && (
+              <div className="flex items-center justify-center mt-5">
+                <button
+                  className="flex items-center gap-3 text-sm text-white font-medium bg-black px-5 py-2 mr-2 rounded text-nowrap cursor-pointer"
+                  disabled={isLoading || isUpdateLoader}
+                  onClick={uploadMoreQuestions}
+                >
+                  {isUpdateLoader ? (
+                    <SpinnerLoader />
+                  ) : (
+                    <LuListCollapse className="text-lg" />
+                  )}
+                  {' '}Load More
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
