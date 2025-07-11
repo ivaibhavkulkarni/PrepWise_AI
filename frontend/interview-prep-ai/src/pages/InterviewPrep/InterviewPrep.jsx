@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import moment from 'moment';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, number } from 'framer-motion';
 import { LuCircleAlert, LuListCollapse } from 'react-icons/lu';
 import SpinnerLoader from '../../components/Loaders/SpinnerLoader';
 import { toast } from 'react-hot-toast';
@@ -102,10 +102,42 @@ const InterviewPrep = () => {
   const uploadMoreQuestions = async () => {
     setIsUpdateLoader(true);
     try {
-     
+      setIsUpdateLoader(true);
+
+      // call Api 
+
+      const aiResponse = await axiosInstance.post(
+        API_PATHS.AI.GENERATE_QUESTIONS,
+        {
+          role: sessionData?.role,
+          experience: sessionData?.experience,
+          topicsToFocus: sessionData?.topicsToFocus,
+          numberOfQuestions: 10,
+        }
+      );
+
+      // should be like dict
+
+      const generatedQuestions = aiResponse.data;
+
+      const response = await axiosInstance.post(
+        API_PATHS.QUESTION.ADD_TO_SESSION,
+        {
+          sessionId,
+          question: generatedQuestions,
+        }
+      );
+
+      if (response.data) {
+        toast.success("Added More Q&A!!")
+        fetchSessionDetailsById()
+      }
     } catch (error) {
-      console.error('Load more error:', error);
-      toast.error('Failed to load more questions.');
+      if (error.response && error.response.data.message) {
+        setErrorMsg(error.response.data.message);
+      }else{
+        setError("Somthing went wrong. Please try again.");
+      }
     } finally {
       setIsUpdateLoader(false);
     }
