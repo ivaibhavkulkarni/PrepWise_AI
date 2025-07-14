@@ -121,6 +121,11 @@ Make your changes and commit (git commit -m "Add your feature").
 Push to the branch (git push origin feature/your-feature).
 Open a Pull Request.
 
+# ScreenShots
+<img width="1920" height="1080" alt="Screenshot 2025-07-14 093925" src="https://github.com/user-attachments/assets/626c1b35-a15b-4b00-9117-6b69563af593" />
+<img width="1920" height="1020" alt="Screenshot 2025-07-14 094110" src="https://github.com/user-attachments/assets/a65fc9fc-6edb-4c45-99b5-7bae000de999" />
+
+
 License
 This project is licensed under the MIT License.
 Acknowledgements
@@ -128,3 +133,4 @@ Acknowledgements
 Built with ❤️ by Vaibhav Kulkarni.
 Powered by Google Gemini AI for intelligent question generation and explanations.
 Styled with Tailwind CSS for a modern, responsive UI.
+
